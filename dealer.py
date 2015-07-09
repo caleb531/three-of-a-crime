@@ -10,7 +10,6 @@ from multiprocessing import Lock, Process
 
 MATCH_LENGTH = 3
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
-NUM_GAMES = 100
 BASE_DECK = list(
     map(frozenset, itertools.combinations(BASE_SUSPECTS, r=MATCH_LENGTH)))
 
@@ -20,6 +19,11 @@ def parse_cli_args():
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument(
+        'num_games',
+        metavar='ngames',
+        type=int,
+        help='the number of games to play')
     parser.add_argument(
         'programs',
         metavar='program',
@@ -146,11 +150,11 @@ def join_processes(processes):
 
 
 # Run all games
-def run_games(players):
+def run_games(num_games, players):
 
     processes = []
     lock = Lock()
-    games = (create_game(g + 1, players) for g in range(NUM_GAMES))
+    games = (create_game(g + 1, players) for g in range(num_games))
 
     for game in games:
 
@@ -181,7 +185,7 @@ def main():
 
     args = parse_cli_args()
     players = create_players(args.programs)
-    run_games(players)
+    run_games(args.num_games, players)
 
 if __name__ == '__main__':
     main()
