@@ -3,13 +3,14 @@
 import argparse
 import json
 import itertools
+import multiprocessing
 import random
 import subprocess
 
 
 MATCH_LENGTH = 3
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
-NUM_GAMES = 10
+NUM_GAMES = 100
 BASE_DECK = list(
     map(frozenset, itertools.combinations(BASE_SUSPECTS, r=MATCH_LENGTH)))
 
@@ -34,13 +35,14 @@ def reset_deck(deck, discard_deck):
     del discard_deck[:]
 
 
-def create_game(players):
+def create_game(game_id, players):
 
     return {
         'winner': None,
         'rounds': None,
-        'deck': BASE_DECK,
-        'players': players
+        'deck': BASE_DECK[:],
+        'players': players,
+        'id': game_id
     }
 
 
@@ -85,7 +87,7 @@ def get_player_guess(player, data):
 def add_card_to_data(data, suspects, match_count):
 
     data['cards'].append({
-        'suspects': list(suspects),
+        'suspects': tuple(suspects),
         'match_count': match_count
     })
 
@@ -94,11 +96,7 @@ def get_average_num_rounds(player):
     return player['rounds'] / NUM_GAMES
 
 
-def take_turn():
-    pass
-
-
-def run_game(game):
+def run_game(game, lock):
 
     deck = game['deck']
     discard_deck = []
@@ -127,17 +125,41 @@ def run_game(game):
     reset_deck(deck, discard_deck)
     reset_data(data)
 
-
-def run_games(players):
-
-    for g in range(NUM_GAMES):
-
-        game = create_game(players)
-        print('Playing game #{}'.format(g + 1))
-        run_game(game)
+    # "Lock" this logic so that processes can't try to run it concurrently
+    with lock:
+        print('Game #{}'.format(game['id']))
         print('  Winner: P{}'.format(game['winner']['index']))
         print('  Rounds: {}'.format(game['rounds']))
 
+
+# Start all asynchronous processes
+def start_processes(processes):
+
+    for process in processes:
+        process.start()
+
+
+# Wait for all processes to complete
+def join_processes(processes):
+
+    for process in processes:
+        process.join()
+
+
+def run_games(players):
+
+    processes = []
+    games = (create_game(g + 1, players) for g in range(NUM_GAMES))
+    lock = multiprocessing.Lock()
+
+    for game in games:
+
+        process = multiprocessing.Process(
+            target=run_game, args=(game, lock))
+        processes.append(process)
+
+    start_processes(processes)
+    join_processes(processes)
 
 
 def create_players(programs):
