@@ -147,16 +147,13 @@ def start_processes(processes):
         process.start()
 
 
-# Wait for each process to finish
-# then get its modified game object from the queue
+# A generator which waits for each process to finish
+# then "yields" its game object from the queue
 def get_games_from_queue(processes, queue):
 
-    games = []
     for process in processes:
         process.join()
-        games.append(queue.get())
-
-    return games
+        yield queue.get()
 
 
 # Print the total number of wins for every player
