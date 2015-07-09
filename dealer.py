@@ -35,16 +35,21 @@ def parse_cli_args():
 
 
 # Create a game object for storing the current state of the game
-def create_game(game_id, players):
+def create_game(game_id):
 
     return {
         'winner': None,
         'rounds': None,
-        # Each game process must have its own deck in memory
-        'deck': BASE_DECK[:],
-        'players': players,
         'id': game_id
     }
+
+
+# Create a new deck by shallow copying the base deck and shuffling it
+def create_deck():
+
+    deck = BASE_DECK[:]
+    random.shuffle(deck)
+    return deck
 
 
 # Build data object that is eventually passed to each player program
@@ -59,10 +64,9 @@ def build_data_object():
 
 
 # Draw a suspects card fron the deck
-def draw_card(deck, discard_deck):
+def draw_card(deck):
 
     card_suspects = deck.pop()
-    discard_deck.append(card_suspects)
     return card_suspects
 
 
@@ -96,7 +100,7 @@ def add_card_to_data(data, suspects, match_count):
 # Write to stdout statistics for this game
 def print_game_stats(game, lock):
 
-    # "Lock" this logic so that processes can't try to run it concurrently
+    # "Lock" this logic so that multiple processes can't run it concurrently
     with lock:
         print('Game #{}'.format(game['id']))
         print('  Winner: P{}'.format(game['winner']))
@@ -104,20 +108,19 @@ def print_game_stats(game, lock):
 
 
 # Run game, record data, and output statistics
-def run_game(game, lock, queue):
+def run_game(game_id, players, lock, queue):
 
-    deck = game['deck']
-    discard_deck = []
-    random.shuffle(deck)
+    game = create_game(game_id)
+    deck = create_deck()
     data = build_data_object()
-    real_suspects = draw_card(deck, discard_deck)
+    real_suspects = draw_card(deck)
 
     # Continue taking turns until correct guess is made
     guessed_correctly = False
     while not guessed_correctly:
-        for player in game['players']:
+        for player in players:
 
-            suspects = draw_card(deck, discard_deck)
+            suspects = draw_card(deck)
             match_count = get_match_count(suspects, real_suspects)
             add_card_to_data(data, suspects, match_count)
             # Ask player to guess correct suspects and store its response
@@ -170,14 +173,13 @@ def print_player_wins(games):
 def run_games(num_games, players):
 
     processes = []
-    lock = mp.Lock()
+    lock = mp.RLock()
     queue = mp.Queue()
-    # Create generator for all games (only need to loop over them once)
-    games = (create_game(g + 1, players) for g in range(num_games))
 
     # Run each game asynchronously as a separate process
-    for game in games:
-        process = mp.Process(target=run_game, args=(game, lock, queue))
+    for game_id in range(1, num_games + 1):
+        process = mp.Process(
+            target=run_game, args=(game_id, players, lock, queue))
         processes.append(process)
 
     start_processes(processes)
