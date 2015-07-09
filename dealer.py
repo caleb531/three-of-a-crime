@@ -5,19 +5,25 @@ import json
 import itertools
 import random
 import subprocess
+from multiprocessing import Lock, Process
 
 
 MATCH_LENGTH = 3
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
-NUM_GAMES = 10
 BASE_DECK = list(
     map(frozenset, itertools.combinations(BASE_SUSPECTS, r=MATCH_LENGTH)))
 
 
+# Parse command-line arguments passed to dealer program
 def parse_cli_args():
 
     parser = argparse.ArgumentParser()
 
+    parser.add_argument(
+        'num_games',
+        metavar='ngames',
+        type=int,
+        help='the number of games to play')
     parser.add_argument(
         'programs',
         metavar='program',
@@ -27,28 +33,20 @@ def parse_cli_args():
     return parser.parse_args()
 
 
-def reset_deck(deck, discard_deck):
-
-    for card in discard_deck:
-        deck.append(card)
-    del discard_deck[:]
-
-
-def create_game(players):
+# Create a game object for storing the current state of the game
+def create_game(game_id, players):
 
     return {
         'winner': None,
         'rounds': None,
-        'deck': BASE_DECK,
-        'players': players
+        # Each game process must have its own deck in memory
+        'deck': BASE_DECK[:],
+        'players': players,
+        'id': game_id
     }
 
 
-def reset_data(data):
-
-    del data['cards'][:]
-
-
+# Build data object that is eventually passed to each player program
 def build_data_object():
 
     return {
@@ -59,6 +57,7 @@ def build_data_object():
     }
 
 
+# Draw a suspects card fron the deck
 def draw_card(deck, discard_deck):
 
     card_suspects = deck.pop()
@@ -66,11 +65,13 @@ def draw_card(deck, discard_deck):
     return card_suspects
 
 
+# Retrieve number of suspects in both a suspects card and the eyewitness card
 def get_match_count(suspects, real_suspects):
 
     return len(suspects & real_suspects)
 
 
+# Pass data object to player program and parse guessed suspects from JSON
 def get_player_guess(player, data):
 
     data_str = json.dumps(data)
@@ -82,64 +83,91 @@ def get_player_guess(player, data):
     return guessed_suspects
 
 
+# Add card data to data object that is to be passed to player program
 def add_card_to_data(data, suspects, match_count):
 
     data['cards'].append({
-        'suspects': list(suspects),
+        'suspects': tuple(suspects),
         'match_count': match_count
     })
 
 
-def get_average_num_rounds(player):
-    return player['rounds'] / NUM_GAMES
+# Write to stdout statistics for this game
+def print_game_stats(game, lock):
+
+    # "Lock" this logic so that processes can't try to run it concurrently
+    with lock:
+        print('Game #{}'.format(game['id']))
+        print('  Winner: P{}'.format(game['winner']['id']))
+        print('  Rounds: {}'.format(game['rounds']))
 
 
-def take_turn():
-    pass
-
-
-def run_game(game):
+# Run game, record data, and output statistics
+def run_game(game, lock):
 
     deck = game['deck']
     discard_deck = []
     random.shuffle(deck)
     data = build_data_object()
-    guessed_correctly = False
-
     real_suspects = draw_card(deck, discard_deck)
 
+    # Continue taking turns until correct guess is made
+    guessed_correctly = False
     while not guessed_correctly:
-
         for player in game['players']:
 
             suspects = draw_card(deck, discard_deck)
             match_count = get_match_count(suspects, real_suspects)
             add_card_to_data(data, suspects, match_count)
+            # Ask player to guess correct suspects and store its response
             guessed_suspects = get_player_guess(player, data)
             if guessed_suspects == real_suspects:
+                # If guess is correct, record winner and end game
                 guessed_correctly = True
                 game['winner'] = player
                 break
             else:
+                # If guess is incorrect, record guess and keep playing
                 data['previous_guesses'].append(list(guessed_suspects))
 
+    # Always record number of rounds that have elapsed by the end of the game
     game['rounds'] = len(data['cards'])
-    reset_deck(deck, discard_deck)
-    reset_data(data)
+    print_game_stats(game, lock)
 
 
-def run_games(players):
+# Start all asynchronous processes
+def start_processes(processes):
 
-    for g in range(NUM_GAMES):
-
-        game = create_game(players)
-        print('Playing game #{}'.format(g + 1))
-        run_game(game)
-        print('  Winner: P{}'.format(game['winner']['index']))
-        print('  Rounds: {}'.format(game['rounds']))
+    for process in processes:
+        process.start()
 
 
+# Wait for all processes to complete before continuing
+# This does not affect processes that have already started
+def join_processes(processes):
 
+    for process in processes:
+        process.join()
+
+
+# Run all games
+def run_games(num_games, players):
+
+    processes = []
+    lock = Lock()
+    # Create generator for all games (only need to loop over them once)
+    games = (create_game(g + 1, players) for g in range(num_games))
+
+    # Run each game asynchronously as a separate process
+    for game in games:
+        process = Process(target=run_game, args=(game, lock))
+        processes.append(process)
+
+    start_processes(processes)
+    join_processes(processes)
+
+
+# Create list of players from the list of player program paths
 def create_players(programs):
 
     players = []
@@ -149,7 +177,7 @@ def create_players(programs):
         players.append({
             'program': program,
             'rounds': 0,
-            'index': p + 1
+            'id': p + 1
         })
 
     return players
@@ -159,7 +187,7 @@ def main():
 
     args = parse_cli_args()
     players = create_players(args.programs)
-    run_games(players)
+    run_games(args.num_games, players)
 
 if __name__ == '__main__':
     main()
