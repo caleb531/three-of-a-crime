@@ -98,10 +98,11 @@ def print_game_stats(game, lock):
     # "Lock" this logic so that processes can't try to run it concurrently
     with lock:
         print('Game #{}'.format(game['id']))
-        print('  Winner: P{}'.format(game['winner']['index']))
+        print('  Winner: P{}'.format(game['winner']['id']))
         print('  Rounds: {}'.format(game['rounds']))
 
 
+# Run game, record data, and output statistics
 def run_game(game, lock):
 
     deck = game['deck']
@@ -154,10 +155,11 @@ def run_games(num_games, players):
 
     processes = []
     lock = Lock()
+    # Create generator for all games (only need to loop over them once)
     games = (create_game(g + 1, players) for g in range(num_games))
 
+    # Run each game asynchronously as a separate process
     for game in games:
-
         process = Process(target=run_game, args=(game, lock))
         processes.append(process)
 
@@ -175,7 +177,7 @@ def create_players(programs):
         players.append({
             'program': program,
             'rounds': 0,
-            'index': p + 1
+            'id': p + 1
         })
 
     return players
