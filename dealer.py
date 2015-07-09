@@ -10,6 +10,8 @@ import subprocess
 MATCH_LENGTH = 3
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
 NUM_GAMES = 10
+BASE_DECK = list(
+    map(frozenset, itertools.combinations(BASE_SUSPECTS, r=MATCH_LENGTH)))
 
 
 def parse_cli_args():
@@ -25,12 +27,6 @@ def parse_cli_args():
     return parser.parse_args()
 
 
-def create_deck():
-
-    combinations = itertools.combinations(BASE_SUSPECTS, r=MATCH_LENGTH)
-    return list(map(set, combinations))
-
-
 def reset_deck(deck, discard_deck):
 
     for card in discard_deck:
@@ -38,12 +34,22 @@ def reset_deck(deck, discard_deck):
     del discard_deck[:]
 
 
+def create_game(players):
+
+    return {
+        'winner': None,
+        'rounds': None,
+        'deck': BASE_DECK,
+        'players': players
+    }
+
+
 def reset_data(data):
 
     del data['cards'][:]
 
 
-def build_data_from_deck(deck):
+def build_data_object():
 
     return {
         'base_suspects': list(BASE_SUSPECTS),
@@ -65,7 +71,7 @@ def get_match_count(suspects, real_suspects):
     return len(suspects & real_suspects)
 
 
-def run_player_program(player, data, real_suspects):
+def get_player_guess(player, data):
 
     data_str = json.dumps(data)
     program = subprocess.Popen(
@@ -73,10 +79,7 @@ def run_player_program(player, data, real_suspects):
     output, error = program.communicate(input=data_str.encode('utf-8'))
     program.stdin.close()
     guessed_suspects = set(json.loads(output.decode('utf-8')))
-    if guessed_suspects == real_suspects:
-        return True
-    else:
-        return False
+    return guessed_suspects
 
 
 def add_card_to_data(data, suspects, match_count):
@@ -91,50 +94,62 @@ def get_average_num_rounds(player):
     return player['rounds'] / NUM_GAMES
 
 
-def run_games_one_player(deck, player):
+def take_turn():
+    pass
 
-    random.shuffle(deck)
-    data = build_data_from_deck(deck)
+
+def run_game(game):
+
+    deck = game['deck']
     discard_deck = []
+    random.shuffle(deck)
+    data = build_data_object()
     guessed_correctly = False
 
     real_suspects = draw_card(deck, discard_deck)
 
-    while not guessed_correctly and len(deck) != 0:
+    while not guessed_correctly:
 
-        suspects = draw_card(deck, discard_deck)
-        match_count = get_match_count(suspects, real_suspects)
-        add_card_to_data(data, suspects, match_count)
-        guessed_correctly = run_player_program(player, data, real_suspects)
+        for player in game['players']:
 
-    rounds = len(data['cards'])
+            suspects = draw_card(deck, discard_deck)
+            match_count = get_match_count(suspects, real_suspects)
+            add_card_to_data(data, suspects, match_count)
+            guessed_suspects = get_player_guess(player, data)
+            if guessed_suspects == real_suspects:
+                guessed_correctly = True
+                game['winner'] = player
+                break
+            else:
+                data['previous_guesses'].append(list(guessed_suspects))
+
+    game['rounds'] = len(data['cards'])
     reset_deck(deck, discard_deck)
     reset_data(data)
-    return rounds
 
 
-def run_games_all_players(deck, players):
+def run_games(players):
 
-    for player in players:
+    for g in range(NUM_GAMES):
 
-        for i in range(NUM_GAMES):
+        game = create_game(players)
+        print('Playing game #{}'.format(g + 1))
+        run_game(game)
+        print('  Winner: P{}'.format(game['winner']['index']))
+        print('  Rounds: {}'.format(game['rounds']))
 
-            rounds = run_games_one_player(deck, player)
-            if rounds:
-                player['rounds'] += rounds
-
-        print(get_average_num_rounds(player))
 
 
 def create_players(programs):
 
     players = []
 
-    for program in programs:
+    for p, program in enumerate(programs):
 
         players.append({
             'program': program,
-            'rounds': 0
+            'rounds': 0,
+            'index': p + 1
         })
 
     return players
@@ -144,8 +159,7 @@ def main():
 
     args = parse_cli_args()
     players = create_players(args.programs)
-    deck = create_deck()
-    run_games_all_players(deck, players)
+    run_games(players)
 
 if __name__ == '__main__':
     main()
