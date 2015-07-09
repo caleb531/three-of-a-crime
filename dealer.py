@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
+import collections
 import json
 import itertools
+import multiprocessing as mp
 import random
 import subprocess
-from multiprocessing import Lock, Process
 
 
 MATCH_LENGTH = 3
@@ -98,12 +99,12 @@ def print_game_stats(game, lock):
     # "Lock" this logic so that processes can't try to run it concurrently
     with lock:
         print('Game #{}'.format(game['id']))
-        print('  Winner: P{}'.format(game['winner']['id']))
+        print('  Winner: P{}'.format(game['winner']))
         print('  Rounds: {}'.format(game['rounds']))
 
 
 # Run game, record data, and output statistics
-def run_game(game, lock):
+def run_game(game, lock, queue):
 
     deck = game['deck']
     discard_deck = []
@@ -124,7 +125,7 @@ def run_game(game, lock):
             if guessed_suspects == real_suspects:
                 # If guess is correct, record winner and end game
                 guessed_correctly = True
-                game['winner'] = player
+                game['winner'] = player['id']
                 break
             else:
                 # If guess is incorrect, record guess and keep playing
@@ -133,6 +134,7 @@ def run_game(game, lock):
     # Always record number of rounds that have elapsed by the end of the game
     game['rounds'] = len(data['cards'])
     print_game_stats(game, lock)
+    queue.put(game)
 
 
 # Start all asynchronous processes
@@ -142,29 +144,45 @@ def start_processes(processes):
         process.start()
 
 
-# Wait for all processes to complete before continuing
-# This does not affect processes that have already started
-def join_processes(processes):
+# Wait for each process to finish
+# then get its modified game object from the queue
+def get_games_from_queue(processes, queue):
 
+    games = []
     for process in processes:
         process.join()
+        games.append(queue.get())
+
+    return games
+
+
+# Print the total number of wins for every player
+def print_player_wins(games):
+
+    all_wins = collections.defaultdict(int)
+    for game in games:
+        all_wins[game['winner']] += 1
+    for player_id, player_wins in all_wins.items():
+        print('P{} Wins: {}'.format(player_id, player_wins))
 
 
 # Run all games
 def run_games(num_games, players):
 
     processes = []
-    lock = Lock()
+    lock = mp.Lock()
+    queue = mp.Queue()
     # Create generator for all games (only need to loop over them once)
     games = (create_game(g + 1, players) for g in range(num_games))
 
     # Run each game asynchronously as a separate process
     for game in games:
-        process = Process(target=run_game, args=(game, lock))
+        process = mp.Process(target=run_game, args=(game, lock, queue))
         processes.append(process)
 
     start_processes(processes)
-    join_processes(processes)
+    games = get_games_from_queue(processes, queue)
+    print_player_wins(games)
 
 
 # Create list of players from the list of player program paths
@@ -176,7 +194,7 @@ def create_players(programs):
 
         players.append({
             'program': program,
-            'rounds': 0,
+            'wins': 0,
             'id': p + 1
         })
 
