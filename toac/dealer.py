@@ -63,13 +63,6 @@ def build_data_object():
     }
 
 
-# Draw a suspects card fron the deck
-def draw_card(deck):
-
-    card_suspects = deck.pop()
-    return card_suspects
-
-
 # Retrieve number of suspects in both a suspects card and the eyewitness card
 def get_match_count(suspects, real_suspects):
 
@@ -113,14 +106,14 @@ def run_game(game_id, players, lock, queue):
     game = create_game(game_id)
     deck = create_deck()
     data = build_data_object()
-    real_suspects = draw_card(deck)
+    real_suspects = deck.pop()
 
     # Continue taking turns until correct guess is made
     guessed_correctly = False
     while not guessed_correctly:
         for player in players:
 
-            suspects = draw_card(deck)
+            suspects = deck.pop()
             match_count = get_match_count(suspects, real_suspects)
             add_card_to_data(data, suspects, match_count)
             # Ask player to guess correct suspects and store its response
