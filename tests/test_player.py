@@ -6,7 +6,7 @@ import json
 import glob
 import nose.tools as nose
 import radon.complexity as radon
-import player
+import toac.player as player
 from unittest.mock import Mock, NonCallableMock, patch
 
 
@@ -115,8 +115,9 @@ def test_get_matches():
 
 
 @patch('sys.stdin', NonCallableMock(read=Mock(return_value='{"cards": []}')))
-@patch('player.transform_data', return_value={'cards': set()})
-@patch('player.get_matches', return_value={frozenset({'hbu', 'kca', 'pto'})})
+@patch('toac.player.transform_data', return_value={'cards': set()})
+@patch(
+    'toac.player.get_matches', return_value={frozenset({'hbu', 'kca', 'pto'})})
 def test_main(stdin, transform_data):
     '''should accept input and produce correct output when run from CLI'''
     out = io.StringIO()
@@ -127,13 +128,3 @@ def test_main(stdin, transform_data):
         nose.assert_equal(output, output.strip())
         match = set(json.loads(output))
         nose.assert_set_equal(match, {'hbu', 'kca', 'pto'})
-
-
-def test_cyclomatic_complexity():
-    '''all functions should have a cyclomatic complexity <= 5'''
-    file_paths = glob.iglob('*.py')
-    for file_path in file_paths:
-        with open(file_path, 'r') as file:
-            blocks = radon.cc_visit(file.read())
-        for block in blocks:
-            yield nose.assert_less_equal, block.complexity, MAX_COMPLEXITY
