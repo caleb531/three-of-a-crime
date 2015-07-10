@@ -6,7 +6,7 @@ import json
 import subprocess
 import nose.tools as nose
 import toac.dealer as dealer
-from unittest.mock import MagicMock, Mock, NonCallableMock, patch
+from unittest.mock import ANY, MagicMock, Mock, NonCallableMock, patch
 
 
 def test_create_game():
@@ -101,3 +101,28 @@ def test_run_game(get_player_guess, create_deck, create_game):
     dealer.run_game(1, players, lock, queue)
     game = create_game.return_value
     nose.assert_equal(game['winner'], 4)
+    queue.put.assert_called_once_with(game)
+
+
+def test_start_processes():
+    '''should start processes when asked to do so'''
+    process1 = MagicMock()
+    process2 = MagicMock()
+    dealer.start_processes((process1, process2))
+    process1.start.assert_called_once_with()
+    process2.start.assert_called_once_with()
+
+
+@patch('multiprocessing.RLock')
+@patch('multiprocessing.Queue')
+@patch('multiprocessing.Process')
+def test_run_games(Process, Queue, RLock):
+    '''should run every game asynchronously in separate process'''
+    players = [{'id': 1, 'wins': 0, 'program': './p1'}]
+    num_games = 5
+    dealer.run_games(num_games, players)
+    nose.assert_equal(Process.call_count, num_games)
+    Process.assert_any_call(
+        target=dealer.run_game, args=(ANY, players, RLock(), Queue()))
+    nose.assert_equal(Process.return_value.start.call_count, 5)
+    nose.assert_equal(Process.return_value.join.call_count, 5)
