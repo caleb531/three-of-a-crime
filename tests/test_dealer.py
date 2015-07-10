@@ -4,6 +4,7 @@ import contextlib
 import io
 import json
 import subprocess
+import sys
 import nose.tools as nose
 import toac.dealer as dealer
 from unittest.mock import ANY, MagicMock, Mock, NonCallableMock, patch
@@ -41,7 +42,7 @@ def test_get_match_count():
     nose.assert_equal(dealer.get_match_count(suspects, real_suspects), 2)
 
 
-@patch('subprocess.Popen', return_value=MagicMock(
+@patch('subprocess.Popen', return_value=Mock(
     communicate=Mock(return_value=(b'["hbu", "lel", "pto"]', None))))
 def test_get_player_guess(popen):
     '''should ask user to guess correct suspects and store their guess'''
@@ -70,6 +71,7 @@ def test_add_card_to_data():
 
 
 def test_print_game_stats():
+    '''should print statistics for each game'''
     game = {'id': 1, 'winner': 2, 'rounds': 3}
     lock = MagicMock()
     dealer.print_game_stats(game, lock)
@@ -84,23 +86,31 @@ def test_print_game_stats():
     {'pto', 'lsl', 'jco'}, {'nnn', 'pto', 'hbu'}, {'kca', 'pto', 'lel'},
     {'kca', 'nnn', 'lsl'}, {'lel', 'pto', 'hbu'}
 ])
+@patch('toac.dealer.build_data_object', return_value={
+    'base_suspects': [], 'match_length': 3, 'cards': [], 'previous_guesses': []
+})
 @patch('toac.dealer.get_player_guess', side_effect=[
     {"lsl", "lel", "nnn"}, {"hbu", "nnn", "jco"},
     {"pto", "lel", "nnn"}, {"pto", "hbu", "lel"}
 ])
-def test_run_game(get_player_guess, create_deck, create_game):
+def test_run_game(get_player_guess, build_data_object, create_deck,
+                  create_game):
+    '''should run game with given players, taking turns as necessary'''
     players = [
         {'id': 1, 'wins': 0, 'program': './p1'},
         {'id': 2, 'wins': 0, 'program': './p2'},
         {'id': 3, 'wins': 0, 'program': './p3'},
-        {'id': 4, 'wins': 0, 'program': './p4'},
-        {'id': 5, 'wins': 0, 'program': './p5'}
     ]
     lock = MagicMock()
-    queue = MagicMock()
-    dealer.run_game(1, players, lock, queue)
+    queue = Mock()
     game = create_game.return_value
-    nose.assert_equal(game['winner'], 4)
+    deck = create_deck.return_value
+    data = build_data_object.return_value
+    dealer.run_game(1, players, lock, queue)
+    nose.assert_equal(game['winner'], 1)
+    nose.assert_equal(game['rounds'], 4)
+    nose.assert_equal(len(data['cards']), 4)
+    nose.assert_equal(len(data['previous_guesses']), 3)
     queue.put.assert_called_once_with(game)
 
 
@@ -111,6 +121,15 @@ def test_start_processes():
     dealer.start_processes((process1, process2))
     process1.start.assert_called_once_with()
     process2.start.assert_called_once_with()
+
+
+def test_get_games_from_queue():
+    '''should yield game when joining respective process'''
+    processes = [Mock(), Mock(), Mock()]
+    queue = Mock()
+    games = dealer.get_games_from_queue(processes, queue)
+    for g, game in enumerate(games):
+        nose.assert_equal(queue.get.call_count, g + 1)
 
 
 @patch('multiprocessing.RLock')
@@ -126,3 +145,25 @@ def test_run_games(Process, Queue, RLock):
         target=dealer.run_game, args=(ANY, players, RLock(), Queue()))
     nose.assert_equal(Process.return_value.start.call_count, 5)
     nose.assert_equal(Process.return_value.join.call_count, 5)
+
+
+def test_create_players():
+    '''should create list of player objects from list of program paths'''
+    programs = ['./p1', './p2', './p3']
+    players = dealer.create_players(programs)
+    for p, (program, player) in enumerate(zip(programs, players)):
+        nose.assert_dict_equal(player, {
+            'program': program, 'wins': 0, 'id': p + 1
+        })
+
+
+@patch('sys.argv', ['./toac/dealer.py', '10', './p1', './p2', './p3'])
+@patch('toac.dealer.run_games')
+def test_main(run_games):
+    '''should run dealer program when executed directly'''
+    programs = sys.argv[2:]
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        players = dealer.create_players(programs)
+        dealer.main()
+        run_games.assert_called_once_with(10, players)

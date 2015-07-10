@@ -77,7 +77,7 @@ def get_player_guess(player, data):
         player['program'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     output, error = program.communicate(input=data_str.encode('utf-8'))
     program.stdin.close()
-    guessed_suspects = set(json.loads(output.decode('utf-8')))
+    guessed_suspects = frozenset(json.loads(output.decode('utf-8')))
     return guessed_suspects
 
 
