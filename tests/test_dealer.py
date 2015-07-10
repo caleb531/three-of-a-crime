@@ -7,7 +7,7 @@ import subprocess
 import sys
 import nose.tools as nose
 import toac.dealer as dealer
-from unittest.mock import ANY, MagicMock, Mock, NonCallableMock, patch
+from unittest.mock import ANY, Mock, NonCallableMagicMock, patch
 
 
 def test_create_game():
@@ -73,7 +73,7 @@ def test_add_card_to_data():
 def test_print_game_stats():
     '''should print statistics for each game'''
     game = {'id': 1, 'winner': 2, 'rounds': 3}
-    lock = MagicMock()
+    lock = NonCallableMagicMock()
     dealer.print_game_stats(game, lock)
     lock.__enter__.assert_called_once_with()
     lock.__exit__.assert_called_once_with(None, None, None)
@@ -101,7 +101,7 @@ def test_run_game(get_player_guess, build_data_object, create_deck,
         {'id': 2, 'wins': 0, 'program': './p2'},
         {'id': 3, 'wins': 0, 'program': './p3'},
     ]
-    lock = MagicMock()
+    lock = NonCallableMagicMock()
     queue = Mock()
     game = create_game.return_value
     deck = create_deck.return_value
@@ -116,8 +116,8 @@ def test_run_game(get_player_guess, build_data_object, create_deck,
 
 def test_start_processes():
     '''should start processes when asked to do so'''
-    process1 = MagicMock()
-    process2 = MagicMock()
+    process1 = Mock()
+    process2 = Mock()
     dealer.start_processes((process1, process2))
     process1.start.assert_called_once_with()
     process2.start.assert_called_once_with()
