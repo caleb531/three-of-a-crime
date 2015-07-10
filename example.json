@@ -7,5 +7,7 @@
     {"suspects": ["kca", "pto", "lel"], "match_count": 2},
     {"suspects": ["kca", "nnn", "lsl"], "match_count": 0}
 	],
-	"previous_guesses": []
+	"previous_guesses": [
+		["lsl", "lel", "nnn"]
+	]
 }
