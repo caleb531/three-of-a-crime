@@ -3,6 +3,7 @@
 import contextlib
 import io
 import json
+import subprocess
 import nose.tools as nose
 import toac.dealer as dealer
 from unittest.mock import MagicMock, Mock, NonCallableMock, patch
@@ -10,11 +11,8 @@ from unittest.mock import MagicMock, Mock, NonCallableMock, patch
 
 def test_create_game():
     '''should create game object with correct properties'''
-    nose.assert_dict_equal(dealer.create_game(3), {
-        'id': 3,
-        'winner': None,
-        'rounds': None
-    })
+    nose.assert_dict_equal(
+        dealer.create_game(3), {'id': 3, 'winner': None, 'rounds': None})
 
 
 def test_create_deck():
@@ -43,6 +41,23 @@ def test_get_match_count():
     nose.assert_equal(dealer.get_match_count(suspects, real_suspects), 2)
 
 
+def test_get_player_guess():
+    '''should ask user to guess correct suspects and store their guess'''
+    player = {'id': 1, 'program': './p1', 'wins': 0}
+    data = {'base_suspects': [], 'match_length': 3, 'cards': [],
+            'previous_guesses': []}
+    mock_communicate = Mock(return_value=(b'["hbu", "lel", "pto"]', None))
+    mock_popen = Mock(return_value=MagicMock(communicate=mock_communicate))
+    with patch('subprocess.Popen', mock_popen):
+        guessed_suspects = dealer.get_player_guess(player, data)
+    mock_popen.assert_called_once_with(
+        player['program'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+    mock_communicate.assert_called_once_with(
+        input=json.dumps(data).encode('utf-8'))
+    nose.assert_set_equal(
+        guessed_suspects, {'hbu', 'lel', 'pto'})
+
+
 def test_add_card_to_data():
     data = {'cards': []}
     suspects = {'lel', 'pto', 'nnn'}
@@ -56,12 +71,28 @@ def test_add_card_to_data():
 
 
 def test_print_game_stats():
-    game = {
-        'id': 1,
-        'winner': 2,
-        'rounds': 3
-    }
+    game = {'id': 1, 'winner': 2, 'rounds': 3}
     lock = MagicMock()
     dealer.print_game_stats(game, lock)
     lock.__enter__.assert_called_once_with()
     lock.__exit__.assert_called_once_with(None, None, None)
+
+
+def test_run_game():
+    game = {'id': 1, 'winner': None, 'rounds': None}
+    deck = [{'pto', 'lsl', 'jco'}, {'nnn', 'pto', 'hbu'},
+            {'kca', 'pto', 'lel'}, {'kca', 'nnn', 'lsl'},
+            {'lel', 'pto', 'hbu'}]
+    guesses = [{"lsl", "lel", "nnn"}, {"hbu", "nnn", "jco"},
+               {"pto", "lel", "nnn"}, {"pto", "hbu", "lel"}]
+    players = []
+    num_players = 5
+    for p in range(1, num_players):
+        players.append({'id': p, 'wins': 0, 'program': './p{}'.format(p)})
+    lock = MagicMock()
+    queue = MagicMock()
+    with patch('toac.dealer.create_game', return_value=game):
+        with patch('toac.dealer.create_deck', return_value=deck):
+            with patch('toac.dealer.get_player_guess', side_effect=guesses):
+                dealer.run_game(1, players, lock, queue)
+    nose.assert_equal(game['winner'], 4)
