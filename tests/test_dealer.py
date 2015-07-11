@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import contextlib
 import io
 import json
 import subprocess
@@ -179,7 +178,6 @@ def test_main(run_games):
     '''should run dealer program when executed directly'''
     programs = sys.argv[2:]
     out = io.StringIO()
-    with contextlib.redirect_stdout(out):
-        players = dealer.create_players(programs)
-        dealer.main()
-        run_games.assert_called_once_with(10, players)
+    players = dealer.create_players(programs)
+    dealer.main()
+    run_games.assert_called_once_with(10, players)
