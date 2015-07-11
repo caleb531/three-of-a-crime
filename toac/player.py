@@ -2,7 +2,6 @@
 
 import itertools
 import json
-import random
 import sys
 
 
@@ -27,7 +26,8 @@ def remove_guesses_from_matches(matches, guesses):
 def combination_matches(combination, cards):
 
     for card in cards:
-        # If combination does not agree with match count of card, stop here
+        # If number of cards in both combination and suspect card does not
+        # equal card's match count, card cannot be a match
         if len(combination & card['suspects']) != card['match_count']:
             return False
     return True
@@ -64,9 +64,9 @@ def main():
     data = json.loads(sys.stdin.read())
     transform_data(data)
 
-    matches = get_matches(**data)
-    [match] = random.sample(matches, 1)
-    print(json.dumps(list(match)).strip(), end='')
+    matches = list(get_matches(**data))
+    match = list(matches[0])
+    print(json.dumps(match).strip(), end='')
 
 if __name__ == '__main__':
     main()
