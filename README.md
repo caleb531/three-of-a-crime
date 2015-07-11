@@ -1,6 +1,7 @@
 # Three of a Crime Solver
 
-*Copyright 2015 Caleb Evans*   Released under the MIT license*
+*Copyright 2015 Caleb Evans*  
+*Released under the MIT license*
 
 [![Build
 Status](https://travis-ci.org/caleb531/three-of-a-crime.svg?branch=master)](https://travis-ci.org/caleb531/three-of-a-crime)
