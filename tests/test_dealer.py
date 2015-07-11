@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 
-import io
 import json
 import subprocess
 import sys
 import nose.tools as nose
 import toac.dealer as dealer
-from unittest.mock import ANY, Mock, NonCallableMagicMock, patch
+from mock import ANY, Mock, NonCallableMagicMock, patch
 
 
 def test_create_game():

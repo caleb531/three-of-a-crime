@@ -6,7 +6,7 @@ import glob
 import nose.tools as nose
 import radon.complexity as radon
 import toac.player as player
-from unittest.mock import Mock, NonCallableMock, patch
+from mock import Mock, NonCallableMock, patch
 from decorators import redirect_stdout
 
 
