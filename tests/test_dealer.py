@@ -177,7 +177,6 @@ def test_create_players():
 def test_main(run_games):
     '''should run dealer program when executed directly'''
     programs = sys.argv[2:]
-    out = io.StringIO()
     players = dealer.create_players(programs)
     dealer.main()
     run_games.assert_called_once_with(10, players)

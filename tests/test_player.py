@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-import contextlib
 import io
 import json
 import glob
@@ -8,6 +7,7 @@ import nose.tools as nose
 import radon.complexity as radon
 import toac.player as player
 from unittest.mock import Mock, NonCallableMock, patch
+from decorators import redirect_stdout
 
 
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
@@ -118,13 +118,12 @@ def test_get_matches():
 @patch('toac.player.transform_data', return_value={'cards': set()})
 @patch(
     'toac.player.get_matches', return_value={frozenset({'hbu', 'kca', 'pto'})})
-def test_main(stdin, transform_data):
+@redirect_stdout
+def test_main(out, get_matches, transform_data):
     '''should accept input and produce correct output when run from CLI'''
-    out = io.StringIO()
-    with contextlib.redirect_stdout(out):
-        player.main()
-        transform_data.assert_called_once_with({'cards': []})
-        output = out.getvalue()
-        nose.assert_equal(output, output.strip())
-        match = set(json.loads(output))
-        nose.assert_set_equal(match, {'hbu', 'kca', 'pto'})
+    player.main()
+    transform_data.assert_called_once_with({'cards': []})
+    output = out.getvalue()
+    nose.assert_equal(output, output.strip())
+    match = set(json.loads(output))
+    nose.assert_set_equal(match, {'hbu', 'kca', 'pto'})
