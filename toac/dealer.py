@@ -4,6 +4,7 @@ import argparse
 import collections
 import json
 import itertools
+import operator
 import multiprocessing as mp
 import random
 import subprocess
@@ -149,13 +150,19 @@ def get_games_from_queue(processes, queue):
         yield queue.get()
 
 
-# Print the total number of wins for every player
-def print_player_wins(games):
+# Calculate and sort the total wins for every player
+def get_sorted_player_wins(games):
 
     all_wins = collections.defaultdict(int)
     for game in games:
         all_wins[game['winner']] += 1
-    for player_id, player_wins in all_wins.items():
+    return sorted(all_wins.items(), key=operator.itemgetter(1), reverse=True)
+
+
+# Print the total number of wins for every player
+def print_player_wins(games):
+
+    for player_id, player_wins in get_sorted_player_wins(games):
         print('P{} Wins: {}'.format(player_id, player_wins))
 
 

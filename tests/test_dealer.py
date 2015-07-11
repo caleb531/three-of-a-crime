@@ -132,6 +132,22 @@ def test_get_games_from_queue():
         nose.assert_equal(queue.get.call_count, g + 1)
 
 
+def test_get_sorted_player_wins():
+    '''should sort player wins by greatest number of wins'''
+    games = [
+        {'id': 1, 'rounds': 3, 'winner': 1},
+        {'id': 2, 'rounds': 3, 'winner': 2},
+        {'id': 3, 'rounds': 3, 'winner': 2},
+        {'id': 4, 'rounds': 3, 'winner': 2},
+        {'id': 5, 'rounds': 3, 'winner': 3},
+        {'id': 6, 'rounds': 3, 'winner': 3}
+    ]
+    all_wins = list(dealer.get_sorted_player_wins(games))
+    nose.assert_list_equal(all_wins, [
+        (2, 3), (3, 2), (1, 1)
+    ])
+
+
 @patch('multiprocessing.RLock')
 @patch('multiprocessing.Queue')
 @patch('multiprocessing.Process')
