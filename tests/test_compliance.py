@@ -8,7 +8,7 @@ import radon.complexity as radon
 
 
 def test_pep8():
-    file_paths = glob.iglob('*.py')
+    file_paths = glob.iglob('*/*.py')
     for file_path in file_paths:
         style_guide = pep8.StyleGuide(quiet=True)
         total_errors = style_guide.input_file(file_path)
@@ -18,7 +18,7 @@ def test_pep8():
 
 
 def test_complexity():
-    file_paths = glob.iglob('*.py')
+    file_paths = glob.iglob('*/*.py')
     for file_path in file_paths:
         with open(file_path, 'r') as file:
             blocks = radon.cc_visit(file.read())

@@ -13,6 +13,7 @@ from decorators import redirect_stdout
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
 MAX_COMPLEXITY = 5
 
+
 def test_transform_data():
     '''should transform input data by converting lists to sets as necessary'''
     data = {
