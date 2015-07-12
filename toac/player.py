@@ -66,7 +66,7 @@ def main():
 
     matches = list(get_matches(**data))
     match = list(matches[0])
-    print(json.dumps(match).strip(), end='')
+    print(json.dumps(match), end='')
 
 if __name__ == '__main__':
     main()
