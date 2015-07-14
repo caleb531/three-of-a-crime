@@ -73,7 +73,7 @@ def get_match_count(suspects, real_suspects):
 # Pass data object to player program and parse guessed suspects from JSON
 def get_player_guess(player, data):
 
-    data_str = json.dumps(data)
+    data_str = json.dumps(data, separators=(',', ':'))
     program = subprocess.Popen(
         player['program'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     output, error = program.communicate(input=data_str.encode('utf-8'))

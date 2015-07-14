@@ -52,7 +52,7 @@ def test_get_player_guess(popen):
     popen.assert_called_once_with(
         player['program'], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
     popen.return_value.communicate.assert_called_once_with(
-        input=json.dumps(data).encode('utf-8'))
+        input=json.dumps(data, separators=(',', ':')).encode('utf-8'))
     nose.assert_set_equal(
         guessed_suspects, {'hbu', 'lel', 'pto'})
 
