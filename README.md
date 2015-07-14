@@ -3,20 +3,14 @@
 *Copyright 2015 Caleb Evans*  
 *Released under the MIT license*
 
-[![Build
-Status](https://travis-ci.org/caleb531/three-of-a-crime.svg?branch=master)](https://travis-ci.org/caleb531/three-of-a-crime)
-[![Coverage
-Status](https://coveralls.io/repos/caleb531/three-of-a-crime/badge.svg?branch=master)](https://coveralls.io/r/caleb531/three-of-a-crime?branch=master)
+[![Build Status](https://travis-ci.org/caleb531/three-of-a-crime.svg?branch=master)](https://travis-ci.org/caleb531/three-of-a-crime)
+[![Coverage Status](https://coveralls.io/repos/caleb531/three-of-a-crime/badge.svg?branch=master)](https://coveralls.io/r/caleb531/three-of-a-crime?branch=master)
 
-This project was created and named for the Gameright game, [Three of a
-Crime](http://www.gamewright.com/gamewright/index.php?page=game&section=games&show=214).
-To understand the purpose of this project, one must first understand how the
-game works.
+This project was created and named for the Gameright game, [Three of a Crime](http://www.gamewright.com/gamewright/index.php?page=game&section=games&show=214). To understand the purpose of this project, one must first understand how the game works.
 
 ## Gameplay
 
-![Three of a
-Crime](http://www.gamewright.com/gamewright/Images/Games/GAMEWRIGHT-236.jpg)
+![Three of a Crime](http://www.gamewright.com/gamewright/Images/Games/GAMEWRIGHT-236.jpg)
 
 Seven suspects for an unmentioned crime are distributed among 35 cards
 representing all possible 3-suspect combinations. One player is designated as
