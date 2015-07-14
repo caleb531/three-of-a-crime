@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import copy
 import json
 import subprocess
 import sys
@@ -77,39 +78,70 @@ def test_print_game_stats():
     lock.__exit__.assert_called_once_with(None, None, None)
 
 
-@patch('toac.dealer.create_game', return_value={
-    'id': 1, 'winner': None, 'rounds': None
-})
-@patch('toac.dealer.create_deck', return_value=[
-    {'pto', 'lsl', 'jco'}, {'nnn', 'pto', 'hbu'}, {'kca', 'pto', 'lel'},
-    {'kca', 'nnn', 'lsl'}, {'lel', 'pto', 'hbu'}
-])
-@patch('toac.dealer.build_data_object', return_value={
-    'base_suspects': [], 'match_length': 3, 'cards': [], 'previous_guesses': []
-})
-@patch('toac.dealer.get_player_guess', side_effect=[
-    {"lsl", "lel", "nnn"}, {"hbu", "nnn", "jco"},
-    {"pto", "lel", "nnn"}, {"pto", "hbu", "lel"}
-])
-def test_run_game(get_player_guess, build_data_object, create_deck,
-                  create_game):
-    '''should run game with given players, taking turns as necessary'''
-    players = [
+class TestRunGame(object):
+    '''run_game should behave as expected in all cases'''
+
+    PLAYERS = [
         {'id': 1, 'wins': 0, 'program': './p1'},
         {'id': 2, 'wins': 0, 'program': './p2'},
         {'id': 3, 'wins': 0, 'program': './p3'},
     ]
-    lock = NonCallableMagicMock()
-    queue = Mock()
-    game = create_game.return_value
-    deck = create_deck.return_value
-    data = build_data_object.return_value
-    dealer.run_game(1, players, lock, queue)
-    nose.assert_equal(game['winner'], 1)
-    nose.assert_equal(game['rounds'], 4)
-    nose.assert_equal(len(data['cards']), 4)
-    nose.assert_equal(len(data['previous_guesses']), 3)
-    queue.put.assert_called_once_with(game)
+    GAME = {'id': 1, 'winner': None, 'rounds': None}
+    DECK = [
+        {'pto', 'lsl', 'jco'}, {'nnn', 'pto', 'hbu'}, {'kca', 'pto', 'lel'},
+        {'kca', 'nnn', 'lsl'}, {'lel', 'pto', 'hbu'}
+    ]
+    DATA = {
+        'base_suspects': [],
+        'match_length': 3,
+        'cards': [],
+        'previous_guesses': []
+    }
+    GUESSES = [
+        {"lsl", "lel", "nnn"}, {"hbu", "nnn", "jco"},
+        {"pto", "lel", "nnn"}, {"pto", "hbu", "lel"}
+    ]
+
+    @patch('toac.dealer.create_game', return_value=copy.deepcopy(GAME))
+    @patch('toac.dealer.create_deck', return_value=copy.deepcopy(DECK))
+    @patch('toac.dealer.build_data_object', return_value=copy.deepcopy(DATA))
+    @patch('toac.dealer.get_player_guess', side_effect=copy.deepcopy(GUESSES))
+    def test_run_game(self, get_player_guess, build_data_object, create_deck,
+                      create_game):
+        '''should run game with given players, taking turns as necessary'''
+        players = [
+            {'id': 1, 'wins': 0, 'program': './p1'},
+            {'id': 2, 'wins': 0, 'program': './p2'},
+            {'id': 3, 'wins': 0, 'program': './p3'},
+        ]
+        lock = NonCallableMagicMock()
+        queue = Mock()
+        game = create_game.return_value
+        data = build_data_object.return_value
+        dealer.run_game(1, self.PLAYERS, lock, queue)
+        nose.assert_equal(game['winner'], 1)
+        nose.assert_equal(game['rounds'], 4)
+        nose.assert_equal(len(data['cards']), 4)
+        nose.assert_equal(len(data['previous_guesses']), 3)
+        queue.put.assert_called_once_with(game)
+
+    @patch('toac.dealer.create_game', return_value=copy.deepcopy(GAME))
+    @patch('toac.dealer.create_deck', return_value=copy.deepcopy(DECK))
+    @patch('toac.dealer.build_data_object', return_value=copy.deepcopy(DATA))
+    @patch('toac.dealer.get_player_guess', return_value=[GUESSES[1]])
+    def test_exhaust_deck(self, get_player_guess, build_data_object,
+                          create_deck, create_game):
+        '''should fail gracefully if deck is exhausted during gameplay'''
+        lock = NonCallableMagicMock()
+        queue = Mock()
+        game = create_game.return_value
+        data = build_data_object.return_value
+        dealer.run_game(1, self.PLAYERS, lock, queue)
+        nose.assert_equal(game['winner'], None)
+        nose.assert_equal(game['rounds'], 4)
+        nose.assert_equal(len(data['cards']), 4)
+        nose.assert_equal(len(data['previous_guesses']), 3)
+        queue.put.assert_called_once_with(game)
 
 
 def test_start_processes():

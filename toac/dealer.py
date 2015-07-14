@@ -111,7 +111,7 @@ def run_game(game_id, players, lock, queue):
 
     # Continue taking turns until correct guess is made
     guessed_correctly = False
-    while not guessed_correctly:
+    while not guessed_correctly and len(deck) != 0:
         for player in players:
 
             suspects = deck.pop()
@@ -123,6 +123,8 @@ def run_game(game_id, players, lock, queue):
                 # If guess is correct, record winner and end game
                 guessed_correctly = True
                 game['winner'] = player['id']
+                break
+            elif len(deck) == 0:
                 break
             else:
                 # If guess is incorrect, record guess and keep playing
