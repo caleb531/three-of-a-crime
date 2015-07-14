@@ -45,7 +45,7 @@ def test_get_match_count():
     communicate=Mock(return_value=(b'["hbu", "lel", "pto"]', None))))
 def test_get_player_guess(popen):
     '''should ask user to guess correct suspects and store their guess'''
-    player = {'id': 1, 'program': './p1', 'wins': 0}
+    player = {'id': 'P1', 'program': './p1', 'wins': 0}
     data = {'base_suspects': [], 'match_length': 3, 'cards': [],
             'previous_guesses': []}
     guessed_suspects = dealer.get_player_guess(player, data)
@@ -165,17 +165,34 @@ def test_get_games_from_queue():
 def test_get_sorted_player_wins():
     '''should sort player wins by greatest number of wins'''
     games = [
-        {'id': 1, 'rounds': 3, 'winner': 1},
-        {'id': 2, 'rounds': 3, 'winner': 2},
-        {'id': 3, 'rounds': 3, 'winner': 2},
-        {'id': 4, 'rounds': 3, 'winner': 2},
-        {'id': 5, 'rounds': 3, 'winner': 3},
-        {'id': 6, 'rounds': 3, 'winner': 3}
+        {'id': 1, 'rounds': 3, 'winner': 'P1'},
+        {'id': 2, 'rounds': 3, 'winner': 'P2'},
+        {'id': 3, 'rounds': 3, 'winner': 'P2'},
+        {'id': 4, 'rounds': 3, 'winner': 'P2'},
+        {'id': 5, 'rounds': 3, 'winner': 'P3'},
+        {'id': 6, 'rounds': 3, 'winner': 'P3'}
     ]
     all_wins = list(dealer.get_sorted_player_wins(games))
     nose.assert_list_equal(all_wins, [
-        (2, 3), (3, 2), (1, 1)
+        ('P2', 3), ('P3', 2), ('P1', 1)
     ])
+
+
+@patch('toac.dealer.print')
+def test_print_player_wins(print):
+    '''should print player wins, only counting games with winners'''
+    games = [
+        {'id': 1, 'winner': 'P2', 'rounds': 4},
+        {'id': 2, 'winner': 'P3', 'rounds': 3},
+        {'id': 3, 'winner': 'P3', 'rounds': 3},
+        {'id': 4, 'winner': 'P1', 'rounds': 4},
+        {'id': 5, 'winner': None, 'rounds': 34}
+    ]
+    dealer.print_player_wins(games)
+    nose.assert_equal(print.call_count, 3)
+    print.assert_any_call('P3 Wins: 2')
+    print.assert_any_call('P2 Wins: 1')
+    print.assert_any_call('P1 Wins: 1')
 
 
 @patch('multiprocessing.RLock')
@@ -199,7 +216,7 @@ def test_create_players():
     players = dealer.create_players(programs)
     for p, (program, player) in enumerate(zip(programs, players)):
         nose.assert_dict_equal(player, {
-            'program': program, 'wins': 0, 'id': p + 1
+            'program': program, 'wins': 0, 'id': 'P{}'.format(p + 1)
         })
 
 

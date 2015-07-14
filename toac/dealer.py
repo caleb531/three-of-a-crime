@@ -97,7 +97,7 @@ def print_game_stats(game, lock):
     # "Lock" this logic so that multiple processes can't run it concurrently
     with lock:
         print('Game #{}'.format(game['id']))
-        print('  Winner: P{}'.format(game['winner']))
+        print('  Winner: {}'.format(game['winner']))
         print('  Rounds: {}'.format(game['rounds']))
 
 
@@ -165,7 +165,8 @@ def get_sorted_player_wins(games):
 def print_player_wins(games):
 
     for player_id, player_wins in get_sorted_player_wins(games):
-        print('P{} Wins: {}'.format(player_id, player_wins))
+        if player_id:
+            print('{} Wins: {}'.format(player_id, player_wins))
 
 
 # Run all games
@@ -196,7 +197,7 @@ def create_players(programs):
         players.append({
             'program': program,
             'wins': 0,
-            'id': p + 1
+            'id': 'P{}'.format(p + 1)
         })
 
     return players
