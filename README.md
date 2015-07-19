@@ -38,6 +38,8 @@ program (found at `toac/dealer.py`) was designed to simulate actual gameplay. To
 run the dealer program, simply invoke the program executable with the number of
 games to play, followed by the paths to two or more player programs.
 
+Note that running the dealer program requires Python 3. Why? Because [Python 3 is *awesome*](https://docs.python.org/3/whatsnew/3.0.html).
+
 ```
 ./toac/dealer.py 10 ./toac/player.py ./toac/player.py
 ```
