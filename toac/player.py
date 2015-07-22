@@ -68,5 +68,6 @@ def main():
     match = list(matches[0])
     print(json.dumps(match), end='')
 
+
 if __name__ == '__main__':
     main()

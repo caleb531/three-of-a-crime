@@ -209,5 +209,6 @@ def main():
     players = create_players(cli_args.programs)
     run_games(cli_args.num_games, players)
 
+
 if __name__ == '__main__':
     main()
