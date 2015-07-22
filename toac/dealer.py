@@ -155,7 +155,7 @@ def get_games_from_queue(processes, queue):
 # Calculate and sort the total wins for every player
 def get_sorted_player_wins(games):
 
-    all_wins = collections.defaultdict(int)
+    all_wins = collections.Counter()
     for game in games:
         all_wins[game['winner']] += 1
     return sorted(all_wins.items(), key=operator.itemgetter(1), reverse=True)
