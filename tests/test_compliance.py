@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import glob
-import os.path
 import nose.tools as nose
 import pep8
 import radon.complexity as radon

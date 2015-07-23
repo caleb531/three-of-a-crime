@@ -109,11 +109,6 @@ class TestRunGame(object):
     def test_run_game(self, get_player_guess, build_data_object, create_deck,
                       create_game):
         '''should run game with given players, taking turns as necessary'''
-        players = [
-            {'id': 1, 'wins': 0, 'program': './p1'},
-            {'id': 2, 'wins': 0, 'program': './p2'},
-            {'id': 3, 'wins': 0, 'program': './p3'},
-        ]
         lock = NonCallableMagicMock()
         queue = Mock()
         game = create_game.return_value
@@ -198,16 +193,16 @@ def test_print_player_wins(print):
 @patch('multiprocessing.RLock')
 @patch('multiprocessing.Queue')
 @patch('multiprocessing.Process')
-def test_run_games(Process, Queue, RLock):
+def test_run_games(process, queue, rlock):
     '''should run every game asynchronously in separate process'''
     players = [{'id': 1, 'wins': 0, 'program': './p1'}]
     num_games = 5
     dealer.run_games(num_games, players)
-    nose.assert_equal(Process.call_count, num_games)
-    Process.assert_any_call(
-        target=dealer.run_game, args=(ANY, players, RLock(), Queue()))
-    nose.assert_equal(Process.return_value.start.call_count, 5)
-    nose.assert_equal(Process.return_value.join.call_count, 5)
+    nose.assert_equal(process.call_count, num_games)
+    process.assert_any_call(
+        target=dealer.run_game, args=(ANY, players, rlock(), queue()))
+    nose.assert_equal(process.return_value.start.call_count, 5)
+    nose.assert_equal(process.return_value.join.call_count, 5)
 
 
 def test_create_players():

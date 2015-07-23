@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 
-import io
 import json
-import glob
 import nose.tools as nose
-import radon.complexity as radon
 import toac.player as player
 from mock import Mock, NonCallableMock, patch
 from decorators import redirect_stdout
@@ -101,15 +98,15 @@ class TestRemoveGuessesFromMatches(object):
 def test_get_matches():
     '''should correctly find all possible matches given some data'''
     data = {
-      'base_suspects': frozenset(BASE_SUSPECTS),
-      'match_length': 3,
-      'cards': [
-        {'suspects': {'pto', 'lsl', 'jco'}, 'match_count': 1},
-        {'suspects': {'nnn', 'pto', 'hbu'}, 'match_count': 2},
-        {'suspects': {'kca', 'pto', 'lel'}, 'match_count': 2},
-        {'suspects': {'kca', 'nnn', 'lsl'}, 'match_count': 0}
-      ],
-      'previous_guesses': []
+        'base_suspects': frozenset(BASE_SUSPECTS),
+        'match_length': 3,
+        'cards': [
+            {'suspects': {'pto', 'lsl', 'jco'}, 'match_count': 1},
+            {'suspects': {'nnn', 'pto', 'hbu'}, 'match_count': 2},
+            {'suspects': {'kca', 'pto', 'lel'}, 'match_count': 2},
+            {'suspects': {'kca', 'nnn', 'lsl'}, 'match_count': 0}
+        ],
+        'previous_guesses': []
     }
     matches = player.get_matches(**data)
     nose.assert_set_equal(matches, {frozenset({'lel', 'pto', 'hbu'})})
