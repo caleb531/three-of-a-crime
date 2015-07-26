@@ -40,7 +40,7 @@ def create_game(game_id):
 
     return {
         'winner': None,
-        'rounds': None,
+        'rounds': 0,
         'id': game_id
     }
 
@@ -91,6 +91,12 @@ def add_card_to_data(data, suspects, match_count):
     })
 
 
+# Always record number of rounds that have elapsed by the end of the game
+def end_game(game, lock, queue):
+    queue.put(game)
+    print_game_stats(game, lock)
+
+
 # Write to stdout statistics for this game
 def print_game_stats(game, lock):
 
@@ -117,8 +123,14 @@ def run_game(game_id, players, lock, queue):
             suspects = deck.pop()
             match_count = get_match_count(suspects, real_suspects)
             add_card_to_data(data, suspects, match_count)
+            game['rounds'] += 1
             # Ask player to guess correct suspects and store its response
-            guessed_suspects = get_player_guess(player, data)
+            try:
+                guessed_suspects = get_player_guess(player, data)
+            except ValueError:
+                end_game(game, lock, queue)
+                print('  Returned JSON is invalid.')
+                return
             if guessed_suspects == real_suspects:
                 # If guess is correct, record winner and end game
                 guessed_correctly = True
@@ -130,10 +142,7 @@ def run_game(game_id, players, lock, queue):
                 # If guess is incorrect, record guess and keep playing
                 data['previous_guesses'].append(list(guessed_suspects))
 
-    # Always record number of rounds that have elapsed by the end of the game
-    game['rounds'] = len(data['cards'])
-    print_game_stats(game, lock)
-    queue.put(game)
+    end_game(game, lock, queue)
 
 
 # Start all asynchronous processes

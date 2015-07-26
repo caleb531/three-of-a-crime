@@ -12,7 +12,7 @@ from mock import ANY, Mock, NonCallableMagicMock, patch
 def test_create_game():
     '''should create game object with correct properties'''
     nose.assert_dict_equal(
-        dealer.create_game(3), {'id': 3, 'winner': None, 'rounds': None})
+        dealer.create_game(3), {'id': 3, 'winner': None, 'rounds': 0})
 
 
 def test_create_deck():
@@ -86,7 +86,7 @@ class TestRunGame(object):
         {'id': 2, 'wins': 0, 'program': './p2'},
         {'id': 3, 'wins': 0, 'program': './p3'},
     ]
-    GAME = {'id': 1, 'winner': None, 'rounds': None}
+    GAME = {'id': 1, 'winner': None, 'rounds': 0}
     DECK = [
         {'pto', 'lsl', 'jco'}, {'nnn', 'pto', 'hbu'}, {'kca', 'pto', 'lel'},
         {'kca', 'nnn', 'lsl'}, {'lel', 'pto', 'hbu'}
@@ -102,6 +102,10 @@ class TestRunGame(object):
         {"pto", "lel", "nnn"}, {"pto", "hbu", "lel"}
     ]
 
+    def setup(self):
+        self.lock = NonCallableMagicMock()
+        self.queue = Mock()
+
     @patch('toac.dealer.create_game', return_value=copy.deepcopy(GAME))
     @patch('toac.dealer.create_deck', return_value=copy.deepcopy(DECK))
     @patch('toac.dealer.build_data_object', return_value=copy.deepcopy(DATA))
@@ -109,16 +113,14 @@ class TestRunGame(object):
     def test_run_game(self, get_player_guess, build_data_object, create_deck,
                       create_game):
         '''should run game with given players, taking turns as necessary'''
-        lock = NonCallableMagicMock()
-        queue = Mock()
         game = create_game.return_value
         data = build_data_object.return_value
-        dealer.run_game(1, self.PLAYERS, lock, queue)
+        dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
         nose.assert_equal(game['winner'], 1)
         nose.assert_equal(game['rounds'], 4)
         nose.assert_equal(len(data['cards']), 4)
         nose.assert_equal(len(data['previous_guesses']), 3)
-        queue.put.assert_called_once_with(game)
+        self.queue.put.assert_called_once_with(game)
 
     @patch('toac.dealer.create_game', return_value=copy.deepcopy(GAME))
     @patch('toac.dealer.create_deck', return_value=copy.deepcopy(DECK))
@@ -127,16 +129,30 @@ class TestRunGame(object):
     def test_exhaust_deck(self, get_player_guess, build_data_object,
                           create_deck, create_game):
         '''should fail gracefully if deck is exhausted during gameplay'''
-        lock = NonCallableMagicMock()
-        queue = Mock()
         game = create_game.return_value
         data = build_data_object.return_value
-        dealer.run_game(1, self.PLAYERS, lock, queue)
+        dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
         nose.assert_equal(game['winner'], None)
         nose.assert_equal(game['rounds'], 4)
         nose.assert_equal(len(data['cards']), 4)
         nose.assert_equal(len(data['previous_guesses']), 3)
-        queue.put.assert_called_once_with(game)
+        self.queue.put.assert_called_once_with(game)
+
+    @patch('toac.dealer.create_game', return_value=copy.deepcopy(GAME))
+    @patch('toac.dealer.create_deck', return_value=copy.deepcopy(DECK))
+    @patch('toac.dealer.build_data_object', return_value=copy.deepcopy(DATA))
+    @patch('toac.dealer.get_player_guess', side_effect=ValueError)
+    def test_invalid_json(self, get_player_guess, build_data_object,
+                          create_deck, create_game):
+        '''should silently fail when invalid JSON produces ValueError'''
+        game = create_game.return_value
+        data = build_data_object.return_value
+        dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
+        nose.assert_equal(game['winner'], None)
+        nose.assert_equal(game['rounds'], 1)
+        nose.assert_equal(len(data['cards']), 1)
+        nose.assert_equal(len(data['previous_guesses']), 0)
+        self.queue.put.assert_called_once_with(game)
 
 
 def test_start_processes():
