@@ -10,13 +10,13 @@ from mock import ANY, Mock, NonCallableMagicMock, patch
 
 
 def test_create_game():
-    '''should create game object with correct properties'''
+    """should create game object with correct properties"""
     nose.assert_dict_equal(
         dealer.create_game(3), {'id': 3, 'winner': None, 'rounds': 0})
 
 
 def test_create_deck():
-    '''should create shuffled deck'''
+    """should create shuffled deck"""
     deck = dealer.create_deck()
     nose.assert_is_instance(deck, list)
     nose.assert_not_equal(deck, dealer.BASE_DECK)
@@ -24,7 +24,7 @@ def test_create_deck():
 
 
 def test_build_data_object():
-    '''should create correct data object to pass to player'''
+    """should create correct data object to pass to player"""
     data = dealer.build_data_object()
     nose.assert_equal(data, {
         'base_suspects': list(dealer.BASE_SUSPECTS),
@@ -35,7 +35,7 @@ def test_build_data_object():
 
 
 def test_get_match_count():
-    '''should calculate correct number of suspects shared by two cards'''
+    """should calculate correct number of suspects shared by two cards"""
     real_suspects = {'hbu', 'pto', 'lel'}
     suspects = {'lel', 'pto', 'nnn'}
     nose.assert_equal(dealer.get_match_count(suspects, real_suspects), 2)
@@ -44,7 +44,7 @@ def test_get_match_count():
 @patch('subprocess.Popen', return_value=Mock(
     communicate=Mock(return_value=(b'["hbu", "lel", "pto"]', None))))
 def test_get_player_guess(popen):
-    '''should ask user to guess correct suspects and store their guess'''
+    """should ask user to guess correct suspects and store their guess"""
     player = {'id': 'P1', 'program': './p1', 'wins': 0}
     data = {'base_suspects': [], 'match_length': 3, 'cards': [],
             'previous_guesses': []}
@@ -70,7 +70,7 @@ def test_add_card_to_data():
 
 
 def test_print_game_stats():
-    '''should print statistics for each game'''
+    """should print statistics for each game"""
     game = {'id': 1, 'winner': 2, 'rounds': 3}
     lock = NonCallableMagicMock()
     dealer.print_game_stats(game, lock)
@@ -79,7 +79,7 @@ def test_print_game_stats():
 
 
 class TestRunGame(object):
-    '''run_game should behave as expected in all cases'''
+    """run_game should behave as expected in all cases"""
 
     PLAYERS = [
         {'id': 1, 'wins': 0, 'program': './p1'},
@@ -112,7 +112,7 @@ class TestRunGame(object):
     @patch('toac.dealer.get_player_guess', side_effect=copy.deepcopy(GUESSES))
     def test_run_game(self, get_player_guess, build_data_object, create_deck,
                       create_game):
-        '''should run game with given players, taking turns as necessary'''
+        """should run game with given players, taking turns as necessary"""
         game = create_game.return_value
         data = build_data_object.return_value
         dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
@@ -128,7 +128,7 @@ class TestRunGame(object):
     @patch('toac.dealer.get_player_guess', return_value=[GUESSES[1]])
     def test_exhaust_deck(self, get_player_guess, build_data_object,
                           create_deck, create_game):
-        '''should fail gracefully if deck is exhausted during gameplay'''
+        """should fail gracefully if deck is exhausted during gameplay"""
         game = create_game.return_value
         data = build_data_object.return_value
         dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
@@ -144,7 +144,7 @@ class TestRunGame(object):
     @patch('toac.dealer.get_player_guess', side_effect=ValueError)
     def test_invalid_json(self, get_player_guess, build_data_object,
                           create_deck, create_game):
-        '''should silently fail when invalid JSON produces ValueError'''
+        """should silently fail when invalid JSON produces ValueError"""
         game = create_game.return_value
         data = build_data_object.return_value
         dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
@@ -156,7 +156,7 @@ class TestRunGame(object):
 
 
 def test_start_processes():
-    '''should start processes when asked to do so'''
+    """should start processes when asked to do so"""
     process1 = Mock()
     process2 = Mock()
     dealer.start_processes((process1, process2))
@@ -165,7 +165,7 @@ def test_start_processes():
 
 
 def test_get_games_from_queue():
-    '''should yield game when joining respective process'''
+    """should yield game when joining respective process"""
     processes = [Mock(), Mock(), Mock()]
     queue = Mock()
     games = dealer.get_games_from_queue(processes, queue)
@@ -174,7 +174,7 @@ def test_get_games_from_queue():
 
 
 def test_get_sorted_player_wins():
-    '''should sort player wins by greatest number of wins'''
+    """should sort player wins by greatest number of wins"""
     games = [
         {'id': 1, 'rounds': 3, 'winner': 'P1'},
         {'id': 2, 'rounds': 3, 'winner': 'P2'},
@@ -191,7 +191,7 @@ def test_get_sorted_player_wins():
 
 @patch('toac.dealer.print')
 def test_print_player_wins(print):
-    '''should print player wins, only counting games with winners'''
+    """should print player wins, only counting games with winners"""
     games = [
         {'id': 1, 'winner': 'P2', 'rounds': 4},
         {'id': 2, 'winner': 'P3', 'rounds': 3},
@@ -210,7 +210,7 @@ def test_print_player_wins(print):
 @patch('multiprocessing.Queue')
 @patch('multiprocessing.Process')
 def test_run_games(process, queue, rlock):
-    '''should run every game asynchronously in separate process'''
+    """should run every game asynchronously in separate process"""
     players = [{'id': 1, 'wins': 0, 'program': './p1'}]
     num_games = 5
     dealer.run_games(num_games, players)
@@ -222,7 +222,7 @@ def test_run_games(process, queue, rlock):
 
 
 def test_create_players():
-    '''should create list of player objects from list of program paths'''
+    """should create list of player objects from list of program paths"""
     programs = ['./p1', './p2', './p3']
     players = dealer.create_players(programs)
     for p, (program, player) in enumerate(zip(programs, players)):
@@ -234,7 +234,7 @@ def test_create_players():
 @patch('sys.argv', ['./toac/dealer.py', '10', './p1', './p2', './p3'])
 @patch('toac.dealer.run_games')
 def test_main(run_games):
-    '''should run dealer program when executed directly'''
+    """should run dealer program when executed directly"""
     programs = sys.argv[2:]
     players = dealer.create_players(programs)
     dealer.main()
