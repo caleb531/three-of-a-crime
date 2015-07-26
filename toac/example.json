@@ -1,13 +1,13 @@
 {
-	"base_suspects": ["pto", "nnn", "jco", "lel", "lsl", "kca", "hbu"],
-	"match_length": 3,
-	"cards": [
-    {"suspects": ["pto", "lsl", "jco"], "match_count": 1},
-    {"suspects": ["nnn", "pto", "hbu"], "match_count": 2},
-    {"suspects": ["kca", "pto", "lel"], "match_count": 2},
-    {"suspects": ["kca", "nnn", "lsl"], "match_count": 0}
-	],
-	"previous_guesses": [
-		["lsl", "lel", "nnn"]
-	]
+    "base_suspects": ["pto", "nnn", "jco", "lel", "lsl", "kca", "hbu"],
+    "match_length": 3,
+    "cards": [
+        {"suspects": ["pto", "lsl", "jco"], "match_count": 1},
+        {"suspects": ["nnn", "pto", "hbu"], "match_count": 2},
+        {"suspects": ["kca", "pto", "lel"], "match_count": 2},
+        {"suspects": ["kca", "nnn", "lsl"], "match_count": 0}
+    ],
+    "previous_guesses": [
+        ["lsl", "lel", "nnn"]
+    ]
 }
