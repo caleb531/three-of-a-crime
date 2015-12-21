@@ -9,7 +9,7 @@ branch = True
 # Regexes for lines to exclude from consideration
 exclude_lines =
 
-	# Ignore non-runnable code
+    # Ignore non-runnable code
     if __name__ == .__main__.:
 
 # Only check coverage for source files
