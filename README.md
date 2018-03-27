@@ -10,7 +10,7 @@ This project was created and named for the Gameright game, [Three of a Crime](ht
 
 ## Gameplay
 
-![Three of a Crime](http://www.gamewright.com/gamewright/Images/Games/GAMEWRIGHT-236.jpg)
+![Three of a Crime](https://gamewright.com/images/ten/GAMEWRIGHT-236.jpg)
 
 Seven suspects for an unmentioned crime are distributed among 35 cards
 representing all possible 3-suspect combinations. One player is designated as
