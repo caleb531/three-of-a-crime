@@ -6,7 +6,7 @@ import subprocess
 import sys
 import nose.tools as nose
 import toac.dealer as dealer
-from mock import ANY, Mock, NonCallableMagicMock, patch
+from mock import Mock, NonCallableMagicMock, patch
 
 
 def test_create_game():
@@ -104,7 +104,6 @@ class TestRunGame(object):
 
     def setup(self):
         self.lock = NonCallableMagicMock()
-        self.queue = Mock()
 
     @patch('toac.dealer.create_game', return_value=copy.deepcopy(GAME))
     @patch('toac.dealer.create_deck', return_value=copy.deepcopy(DECK))
@@ -115,12 +114,11 @@ class TestRunGame(object):
         """should run game with given players, taking turns as necessary"""
         game = create_game.return_value
         data = build_data_object.return_value
-        dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
+        dealer.run_game(1, self.PLAYERS, self.lock)
         nose.assert_equal(game['winner'], 1)
         nose.assert_equal(game['rounds'], 4)
         nose.assert_equal(len(data['cards']), 4)
         nose.assert_equal(len(data['previous_guesses']), 3)
-        self.queue.put.assert_called_once_with(game)
 
     @patch('toac.dealer.create_game', return_value=copy.deepcopy(GAME))
     @patch('toac.dealer.create_deck', return_value=copy.deepcopy(DECK))
@@ -131,12 +129,11 @@ class TestRunGame(object):
         """should fail gracefully if deck is exhausted during gameplay"""
         game = create_game.return_value
         data = build_data_object.return_value
-        dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
+        dealer.run_game(1, self.PLAYERS, self.lock)
         nose.assert_equal(game['winner'], None)
         nose.assert_equal(game['rounds'], 4)
         nose.assert_equal(len(data['cards']), 4)
         nose.assert_equal(len(data['previous_guesses']), 3)
-        self.queue.put.assert_called_once_with(game)
 
     @patch('toac.dealer.create_game', return_value=copy.deepcopy(GAME))
     @patch('toac.dealer.create_deck', return_value=copy.deepcopy(DECK))
@@ -147,30 +144,19 @@ class TestRunGame(object):
         """should silently fail when invalid JSON produces ValueError"""
         game = create_game.return_value
         data = build_data_object.return_value
-        dealer.run_game(1, self.PLAYERS, self.lock, self.queue)
+        dealer.run_game(1, self.PLAYERS, self.lock)
         nose.assert_equal(game['winner'], None)
         nose.assert_equal(game['rounds'], 1)
         nose.assert_equal(len(data['cards']), 1)
         nose.assert_equal(len(data['previous_guesses']), 0)
-        self.queue.put.assert_called_once_with(game)
 
 
-def test_start_processes():
-    """should start processes when asked to do so"""
-    process1 = Mock()
-    process2 = Mock()
-    dealer.start_processes((process1, process2))
-    process1.start.assert_called_once_with()
-    process2.start.assert_called_once_with()
-
-
-def test_get_games_from_queue():
+def test_get_finished_games():
     """should yield game when joining respective process"""
     processes = [Mock(), Mock(), Mock()]
-    queue = Mock()
-    games = dealer.get_games_from_queue(processes, queue)
-    for g, game in enumerate(games):
-        nose.assert_equal(queue.get.call_count, g + 1)
+    games = dealer.get_finished_games(processes)
+    for game, process in zip(games, processes):
+        nose.assert_equal(process.get.call_count, 1)
 
 
 def test_get_sorted_player_wins():
@@ -206,19 +192,17 @@ def test_print_player_wins(print):
     print.assert_any_call('P1 Wins: 1')
 
 
-@patch('multiprocessing.RLock')
-@patch('multiprocessing.Queue')
-@patch('multiprocessing.Process')
-def test_run_games(process, queue, rlock):
-    """should run every game asynchronously in separate process"""
-    players = [{'id': 1, 'wins': 0, 'program': './p1'}]
+@patch('multiprocessing.managers.SyncManager.RLock', return_value=Mock())
+@patch('multiprocessing.pool.Pool.apply_async')
+def test_run_games(apply_async, rlock):
+    """should run every game asynchronously in separate pool"""
+    players = [{'id': 1, 'wins': 0, 'program': './toac/player'}]
     num_games = 5
     dealer.run_games(num_games, players)
-    nose.assert_equal(process.call_count, num_games)
-    process.assert_any_call(
-        target=dealer.run_game, args=(ANY, players, rlock(), queue()))
-    nose.assert_equal(process.return_value.start.call_count, 5)
-    nose.assert_equal(process.return_value.join.call_count, 5)
+    nose.assert_equal(apply_async.call_count, num_games)
+    apply_async.assert_any_call(
+        dealer.run_game, args=(1, players, rlock.return_value))
+    nose.assert_equal(apply_async.return_value.get.call_count, 5)
 
 
 def test_create_players():
