@@ -14,6 +14,7 @@ MATCH_LENGTH = 3
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
 BASE_DECK = list(
     map(frozenset, itertools.combinations(BASE_SUSPECTS, r=MATCH_LENGTH)))
+MAX_NUM_CONCURRENT_GAMES = 4
 
 
 # Parse command-line arguments passed to dealer program
@@ -92,8 +93,7 @@ def add_card_to_data(data, suspects, match_count):
 
 
 # Always record number of rounds that have elapsed by the end of the game
-def end_game(game, lock, queue):
-    queue.put(game)
+def end_game(game, lock):
     print_game_stats(game, lock)
 
 
@@ -108,7 +108,7 @@ def print_game_stats(game, lock):
 
 
 # Run game, record data, and output statistics
-def run_game(game_id, players, lock, queue):
+def run_game(game_id, players, lock):
 
     game = create_game(game_id)
     deck = create_deck()
@@ -128,7 +128,7 @@ def run_game(game_id, players, lock, queue):
             try:
                 guessed_suspects = get_player_guess(player, data)
             except ValueError:
-                end_game(game, lock, queue)
+                end_game(game, lock)
                 print('  Returned JSON is invalid.')
                 return
             if guessed_suspects == real_suspects:
@@ -142,23 +142,16 @@ def run_game(game_id, players, lock, queue):
                 # If guess is incorrect, record guess and keep playing
                 data['previous_guesses'].append(list(guessed_suspects))
 
-    end_game(game, lock, queue)
-
-
-# Start all asynchronous processes
-def start_processes(processes):
-
-    for process in processes:
-        process.start()
+    end_game(game, lock)
+    return game
 
 
 # A generator which waits for each process to finish
-# then "yields" its game object from the queue
-def get_games_from_queue(processes, queue):
+# then "yields" the finished game object
+def get_finished_games(processes):
 
     for process in processes:
-        process.join()
-        yield queue.get()
+        yield process.get()
 
 
 # Calculate and sort the total wins for every player
@@ -182,17 +175,17 @@ def print_player_wins(games):
 def run_games(num_games, players):
 
     processes = []
-    lock = mp.RLock()
-    queue = mp.Queue()
+    m = mp.Manager()
+    lock = m.RLock()
+    pool = mp.Pool(processes=MAX_NUM_CONCURRENT_GAMES)
 
     # Run each game asynchronously as a separate process
     for game_id in range(1, num_games + 1):
-        process = mp.Process(
-            target=run_game, args=(game_id, players, lock, queue))
+        process = pool.apply_async(run_game, args=(game_id, players, lock))
         processes.append(process)
 
-    start_processes(processes)
-    games = get_games_from_queue(processes, queue)
+    pool.close()
+    games = get_finished_games(processes)
     print_player_wins(games)
 
 
