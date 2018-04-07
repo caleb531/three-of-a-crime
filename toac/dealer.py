@@ -177,14 +177,13 @@ def run_games(num_games, players):
     processes = []
     m = mp.Manager()
     lock = m.RLock()
-    pool = mp.Pool(processes=MAX_NUM_CONCURRENT_GAMES)
 
-    # Run each game asynchronously as a separate process
-    for game_id in range(1, num_games + 1):
-        process = pool.apply_async(run_game, args=(game_id, players, lock))
-        processes.append(process)
+    with mp.Pool(processes=MAX_NUM_CONCURRENT_GAMES) as pool:
+        # Run each game asynchronously as a separate process
+        for game_id in range(1, num_games + 1):
+            process = pool.apply_async(run_game, args=(game_id, players, lock))
+            processes.append(process)
 
-    pool.close()
     games = get_finished_games(processes)
     print_player_wins(games)
 
