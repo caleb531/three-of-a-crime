@@ -4,7 +4,7 @@ import json
 import nose.tools as nose
 import toac.player as player
 from mock import Mock, NonCallableMock, patch
-from decorators import redirect_stdout
+from contextlib import redirect_stdout
 
 
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
