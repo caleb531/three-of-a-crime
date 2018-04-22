@@ -123,6 +123,5 @@ def test_main(get_matches, transform_data):
         player.main()
         transform_data.assert_called_once_with({'cards': []})
         output = out.getvalue()
-        nose.assert_equal(output, output.strip())
         match = set(json.loads(output))
         nose.assert_set_equal(match, {'hbu', 'kca', 'pto'})
