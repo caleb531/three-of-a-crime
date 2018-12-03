@@ -184,8 +184,8 @@ def run_games(num_games, players):
             process = pool.apply_async(run_game, args=(game_id, players, lock))
             processes.append(process)
 
-    games = get_finished_games(processes)
-    print_player_wins(games)
+        games = get_finished_games(processes)
+        print_player_wins(games)
 
 
 # Create list of players from the list of player program paths

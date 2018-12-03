@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 
+import contextlib
 import copy
+import io
 import json
 import subprocess
 import sys
 import nose.tools as nose
 import toac.dealer as dealer
-from mock import Mock, NonCallableMagicMock, patch
+from mock import ANY, Mock, NonCallableMagicMock, patch
 
 
 def test_create_game():
@@ -192,17 +194,25 @@ def test_print_player_wins(print):
     print.assert_any_call('P1 Wins: 1')
 
 
-@patch('multiprocessing.managers.SyncManager.RLock', return_value=Mock())
 @patch('multiprocessing.pool.Pool.apply_async')
-def test_run_games(apply_async, rlock):
-    """should run every game asynchronously in separate pool"""
-    players = [{'id': 1, 'wins': 0, 'program': './toac/player'}]
+def test_run_games_mock_pool(apply_async):
+    """should run every game asynchronously in separate (mocked) pool"""
+    players = [{'id': 1, 'wins': 0, 'program': './toac/player.py'}]
     num_games = 5
     dealer.run_games(num_games, players)
     nose.assert_equal(apply_async.call_count, num_games)
     apply_async.assert_any_call(
-        dealer.run_game, args=(1, players, rlock.return_value))
+        dealer.run_game, args=(1, players, ANY))
     nose.assert_equal(apply_async.return_value.get.call_count, 5)
+
+
+def test_run_games_no_mock_pool():
+    """should run every game asynchronously in separate (real) pool"""
+    players = [{'id': 1, 'wins': 0, 'program': './toac/player.py'}]
+    num_games = 5
+    with contextlib.redirect_stdout(io.StringIO()) as out:
+        dealer.run_games(num_games, players)
+        nose.assert_true(out, 'run_games did not complete')
 
 
 def test_create_players():
