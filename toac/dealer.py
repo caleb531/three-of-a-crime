@@ -5,7 +5,7 @@ import collections
 import json
 import itertools
 import operator
-import multiprocessing as mp
+import multiprocessing
 import random
 import subprocess
 
@@ -175,10 +175,9 @@ def print_player_wins(games):
 def run_games(num_games, players):
 
     processes = []
-    m = mp.Manager()
-    lock = m.RLock()
+    lock = multiprocessing.Manager().RLock()
 
-    with mp.Pool(processes=MAX_NUM_CONCURRENT_GAMES) as pool:
+    with multiprocessing.Pool(processes=MAX_NUM_CONCURRENT_GAMES) as pool:
         # Run each game asynchronously as a separate process
         for game_id in range(1, num_games + 1):
             process = pool.apply_async(run_game, args=(game_id, players, lock))
