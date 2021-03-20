@@ -206,15 +206,6 @@ def test_run_games_mock_pool(apply_async):
     nose.assert_equal(apply_async.return_value.get.call_count, 5)
 
 
-def test_run_games_no_mock_pool():
-    """should run every game asynchronously in separate (real) pool"""
-    players = [{'id': 1, 'wins': 0, 'program': './toac/player.py'}]
-    num_games = 5
-    with contextlib.redirect_stdout(io.StringIO()) as out:
-        dealer.run_games(num_games, players)
-        nose.assert_true(out, 'run_games did not complete')
-
-
 def test_create_players():
     """should create list of player objects from list of program paths"""
     programs = ['./p1', './p2', './p3']
