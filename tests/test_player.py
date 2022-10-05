@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import json
-import nose.tools as nose
+import unittest
 import toac.player as player
-from mock import Mock, NonCallableMock, patch
 from contextlib import redirect_stdout
 from io import StringIO
+from unittest.mock import Mock, NonCallableMock, patch
+
+case = unittest.TestCase()
 
 
 BASE_SUSPECTS = {'pto', 'nnn', 'jco', 'lel', 'lsl', 'kca', 'hbu'}
@@ -27,19 +29,19 @@ def test_transform_data():
         ]
     }
     player.transform_data(data)
-    nose.assert_is_instance(data['base_suspects'], frozenset)
-    nose.assert_is_instance(data['cards'], list)
+    case.assertIsInstance(data['base_suspects'], frozenset)
+    case.assertIsInstance(data['cards'], list)
     for card in data['cards']:
-        yield nose.assert_is_instance, card['suspects'], frozenset
+        yield case.assertIsInstance, card['suspects'], frozenset
     for guess in data['previous_guesses']:
-        yield nose.assert_is_instance, guess, frozenset
-    nose.assert_is_instance(data['previous_guesses'], frozenset)
+        yield case.assertIsInstance, guess, frozenset
+    case.assertIsInstance(data['previous_guesses'], frozenset)
 
 
 class TestRemoveImpossibleSuspects(object):
     """remove_impossible_suspects should behave as expected in all cases"""
 
-    def setup(self):
+    def setUp(self):
         self.base_suspects = set(BASE_SUSPECTS)
 
     def test_same_reference(self):
@@ -47,7 +49,7 @@ class TestRemoveImpossibleSuspects(object):
         cards = []
         old_base_suspects = self.base_suspects
         player.remove_impossible_suspects(cards, self.base_suspects)
-        nose.assert_set_equal(self.base_suspects, old_base_suspects)
+        case.assertSetEqual(self.base_suspects, old_base_suspects)
 
     def test_remove_impossible_suspects(self):
         """should remove impossible suspects from base suspect set"""
@@ -58,7 +60,7 @@ class TestRemoveImpossibleSuspects(object):
             {'suspects': {'kca', 'nnn', 'lsl'}, 'match_count': 0}
         ]
         player.remove_impossible_suspects(cards, self.base_suspects)
-        nose.assert_set_equal(self.base_suspects, {'pto', 'jco', 'lel', 'hbu'})
+        case.assertSetEqual(self.base_suspects, {'pto', 'jco', 'lel', 'hbu'})
 
     def test_fail_silently(self):
         """should not raise exception if suspect has already been removed"""
@@ -69,13 +71,13 @@ class TestRemoveImpossibleSuspects(object):
             {'suspects': ['lel', 'hbu', 'kca'], 'match_count': 0}
         ]
         player.remove_impossible_suspects(cards, self.base_suspects)
-        nose.assert_set_equal(self.base_suspects, {'pto', 'jco', 'nnn'})
+        case.assertSetEqual(self.base_suspects, {'pto', 'jco', 'nnn'})
 
 
 class TestRemoveGuessesFromMatches(object):
     """remove_guesses_from_matches should behave as expected in all cases"""
 
-    def setup(self):
+    def setUp(self):
         self.guesses = {
             frozenset({'kca', 'nnn', 'hbu'}),
             frozenset({'lsl', 'pto', 'nnn'})
@@ -86,14 +88,14 @@ class TestRemoveGuessesFromMatches(object):
         """should modify set of matches"""
         old_matches = self.matches
         player.remove_guesses_from_matches(self.matches, self.guesses)
-        nose.assert_set_equal(self.matches, old_matches)
+        case.assertSetEqual(self.matches, old_matches)
 
     def test_matches_one_guess(self):
         """should remove all guesses from set of matches"""
         first_guess, second_guess = self.guesses
         player.remove_guesses_from_matches(
             self.matches, {first_guess})
-        nose.assert_set_equal(self.matches, {second_guess})
+        case.assertSetEqual(self.matches, {second_guess})
 
 
 def test_get_matches():
@@ -110,7 +112,7 @@ def test_get_matches():
         'previous_guesses': []
     }
     matches = player.get_matches(**data)
-    nose.assert_set_equal(matches, {frozenset({'lel', 'pto', 'hbu'})})
+    case.assertSetEqual(matches, {frozenset({'lel', 'pto', 'hbu'})})
 
 
 @patch('sys.stdin', NonCallableMock(read=Mock(return_value='{"cards": []}')))
@@ -124,4 +126,4 @@ def test_main(get_matches, transform_data):
         transform_data.assert_called_once_with({'cards': []})
         output = out.getvalue()
         match = set(json.loads(output))
-        nose.assert_set_equal(match, {'hbu', 'kca', 'pto'})
+        case.assertSetEqual(match, {'hbu', 'kca', 'pto'})

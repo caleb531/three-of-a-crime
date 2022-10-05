@@ -1,10 +1,10 @@
 # Three of a Crime Solver
 
-*Copyright 2015-2018 Caleb Evans*  
+*Copyright 2015-2022 Caleb Evans*  
 *Released under the MIT license*
 
-[![Build Status](https://app.travis-ci.com/caleb531/three-of-a-crime.svg?branch=master)](https://app.travis-ci.com/caleb531/three-of-a-crime)
-[![Coverage Status](https://coveralls.io/repos/caleb531/three-of-a-crime/badge.svg?branch=master)](https://coveralls.io/r/caleb531/three-of-a-crime?branch=master)
+[![tests](https://github.com/caleb531/three-of-a-crime/actions/workflows/tests.yml/badge.svg)](https://github.com/caleb531/three-of-a-crime/actions/workflows/tests.yml)
+[![Coverage Status](https://coveralls.io/repos/caleb531/three-of-a-crime/badge.svg?branch=main)](https://coveralls.io/r/caleb531/three-of-a-crime?branch=main)
 
 This project was created and named for the Gameright game, [Three of a Crime](http://www.gamewright.com/gamewright/index.php?page=game&section=games&show=214). To understand the purpose of this project, one must first understand how the game works.
 
