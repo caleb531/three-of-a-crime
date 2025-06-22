@@ -1,0 +1,35 @@
+[project]
+name = "three-of-a-crime"
+version = "1.0.0"
+description = "Solver and dealer programs for the Three of a Crime deduction game."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "Caleb Evans", email = "caleb@calebevans.me"}
+]
+maintainers = [
+    {name = "Caleb Evans", email = "caleb@calebevans.me"}
+]
+license = "MIT"
+dependencies = []
+
+[dependency-groups]
+dev = []
+
+[tool.ruff]
+include = ["**/*.py"]
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    "W",
+    # pyflakes
+    "F",
+    # isort
+    "I",
+    # perflint
+    "PERF",
+    # flake8-executable
+    "EXE"
+]
