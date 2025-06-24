@@ -4,12 +4,12 @@ import copy
 import json
 import subprocess
 import sys
-import toac.dealer as dealer
 import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import ANY, Mock, NonCallableMagicMock, patch
 
+import toac.dealer as dealer
 
 case = unittest.TestCase()
 

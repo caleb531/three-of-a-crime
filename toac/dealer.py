@@ -2,13 +2,12 @@
 
 import argparse
 import collections
-import json
 import itertools
-import operator
+import json
 import multiprocessing
+import operator
 import random
 import subprocess
-
 
 MATCH_LENGTH = 3
 BASE_SUSPECTS = {"pto", "nnn", "jco", "lel", "lsl", "kca", "hbu"}

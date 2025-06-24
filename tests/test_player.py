@@ -2,10 +2,11 @@
 
 import json
 import unittest
-import toac.player as player
 from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import Mock, NonCallableMock, patch
+
+import toac.player as player
 
 case = unittest.TestCase()
 
