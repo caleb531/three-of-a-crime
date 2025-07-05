@@ -13,6 +13,13 @@ maintainers = [
 license = "MIT"
 dependencies = []
 
+[project.scripts]
+toac = "toac.dealer:main"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
 [dependency-groups]
 dev = [
     "coverage==6.5.0",
