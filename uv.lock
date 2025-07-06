@@ -76,7 +76,7 @@ wheels = [
 [[package]]
 name = "three-of-a-crime"
 version = "1.0.0"
-source = { virtual = "." }
+source = { editable = "." }
 
 [package.dev-dependencies]
 dev = [
