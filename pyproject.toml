@@ -51,10 +51,7 @@ select = [
 # Coverage.py configuration migrated from legacy .coveragerc
 [tool.coverage.run]
 branch = true
-include = [
-    "toac/dealer.py",
-    "toac/player.py",
-]
+include = ["toac/*.py"]
 
 [tool.coverage.report]
 # Regexes for lines to exclude from consideration
