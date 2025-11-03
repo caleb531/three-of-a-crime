@@ -1,15 +1,11 @@
 #!/usr/bin/env python3
 
 import json
-import unittest
 from contextlib import redirect_stdout
 from io import StringIO
 from unittest.mock import Mock, NonCallableMock, patch
 
 import toac.player as player
-
-case = unittest.TestCase()
-
 
 BASE_SUSPECTS = {"pto", "nnn", "jco", "lel", "lsl", "kca", "hbu"}
 MAX_COMPLEXITY = 5
@@ -28,72 +24,72 @@ def test_transform_data():
         "previous_guesses": [["kca", "nnn", "hbu"], ["lsl", "pto", "nnn"]],
     }
     player.transform_data(data)
-    case.assertIsInstance(data["base_suspects"], frozenset)
-    case.assertIsInstance(data["cards"], list)
+    assert isinstance(data["base_suspects"], frozenset)
+    assert isinstance(data["cards"], list)
     for card in data["cards"]:
-        yield case.assertIsInstance, card["suspects"], frozenset
+        assert isinstance(card["suspects"], frozenset)
     for guess in data["previous_guesses"]:
-        yield case.assertIsInstance, guess, frozenset
-    case.assertIsInstance(data["previous_guesses"], frozenset)
+        assert isinstance(guess, frozenset)
+    assert isinstance(data["previous_guesses"], frozenset)
 
 
-class TestRemoveImpossibleSuspects(object):
-    """remove_impossible_suspects should behave as expected in all cases"""
-
-    def setUp(self):
-        self.base_suspects = set(BASE_SUSPECTS)
-
-    def test_same_reference(self):
-        """should modify base suspect set"""
-        cards = []
-        old_base_suspects = self.base_suspects
-        player.remove_impossible_suspects(cards, self.base_suspects)
-        case.assertSetEqual(self.base_suspects, old_base_suspects)
-
-    def test_remove_impossible_suspects(self):
-        """should remove impossible suspects from base suspect set"""
-        cards = [
-            {"suspects": {"pto", "lsl", "jco"}, "match_count": 1},
-            {"suspects": {"nnn", "pto", "hbu"}, "match_count": 2},
-            {"suspects": {"kca", "pto", "lel"}, "match_count": 2},
-            {"suspects": {"kca", "nnn", "lsl"}, "match_count": 0},
-        ]
-        player.remove_impossible_suspects(cards, self.base_suspects)
-        case.assertSetEqual(self.base_suspects, {"pto", "jco", "lel", "hbu"})
-
-    def test_fail_silently(self):
-        """should not raise exception if suspect has already been removed"""
-        cards = [
-            {"suspects": ["lel", "lsl", "kca"], "match_count": 0},
-            {"suspects": ["jco", "lsl", "hbu"], "match_count": 1},
-            {"suspects": ["kca", "nnn", "pto"], "match_count": 2},
-            {"suspects": ["lel", "hbu", "kca"], "match_count": 0},
-        ]
-        player.remove_impossible_suspects(cards, self.base_suspects)
-        case.assertSetEqual(self.base_suspects, {"pto", "jco", "nnn"})
+def test_remove_impossible_suspects_same_reference():
+    """should modify base suspect set"""
+    base_suspects = set(BASE_SUSPECTS)
+    cards = []
+    old_base_suspects = base_suspects
+    player.remove_impossible_suspects(cards, base_suspects)
+    assert base_suspects == old_base_suspects
 
 
-class TestRemoveGuessesFromMatches(object):
-    """remove_guesses_from_matches should behave as expected in all cases"""
+def test_remove_impossible_suspects():
+    """should remove impossible suspects from base suspect set"""
+    base_suspects = set(BASE_SUSPECTS)
+    cards = [
+        {"suspects": {"pto", "lsl", "jco"}, "match_count": 1},
+        {"suspects": {"nnn", "pto", "hbu"}, "match_count": 2},
+        {"suspects": {"kca", "pto", "lel"}, "match_count": 2},
+        {"suspects": {"kca", "nnn", "lsl"}, "match_count": 0},
+    ]
+    player.remove_impossible_suspects(cards, base_suspects)
+    assert base_suspects == {"pto", "jco", "lel", "hbu"}
 
-    def setUp(self):
-        self.guesses = {
-            frozenset({"kca", "nnn", "hbu"}),
-            frozenset({"lsl", "pto", "nnn"}),
-        }
-        self.matches = set(self.guesses)
 
-    def test_same_reference(self):
-        """should modify set of matches"""
-        old_matches = self.matches
-        player.remove_guesses_from_matches(self.matches, self.guesses)
-        case.assertSetEqual(self.matches, old_matches)
+def test_remove_impossible_suspects_fail_silently():
+    """should not raise exception if suspect has already been removed"""
+    base_suspects = set(BASE_SUSPECTS)
+    cards = [
+        {"suspects": ["lel", "lsl", "kca"], "match_count": 0},
+        {"suspects": ["jco", "lsl", "hbu"], "match_count": 1},
+        {"suspects": ["kca", "nnn", "pto"], "match_count": 2},
+        {"suspects": ["lel", "hbu", "kca"], "match_count": 0},
+    ]
+    player.remove_impossible_suspects(cards, base_suspects)
+    assert base_suspects == {"pto", "jco", "nnn"}
 
-    def test_matches_one_guess(self):
-        """should remove all guesses from set of matches"""
-        first_guess, second_guess = self.guesses
-        player.remove_guesses_from_matches(self.matches, {first_guess})
-        case.assertSetEqual(self.matches, {second_guess})
+
+def test_remove_guesses_from_matches_same_reference():
+    """should modify set of matches"""
+    guesses = {
+        frozenset({"kca", "nnn", "hbu"}),
+        frozenset({"lsl", "pto", "nnn"}),
+    }
+    matches = set(guesses)
+    old_matches = matches
+    player.remove_guesses_from_matches(matches, guesses)
+    assert matches == old_matches
+
+
+def test_remove_guesses_from_matches():
+    """should remove all guesses from set of matches"""
+    guesses = {
+        frozenset({"kca", "nnn", "hbu"}),
+        frozenset({"lsl", "pto", "nnn"}),
+    }
+    matches = set(guesses)
+    first_guess, second_guess = guesses
+    player.remove_guesses_from_matches(matches, {first_guess})
+    assert matches == {second_guess}
 
 
 def test_get_matches():
@@ -110,7 +106,7 @@ def test_get_matches():
         "previous_guesses": [],
     }
     matches = player.get_matches(**data)
-    case.assertSetEqual(matches, {frozenset({"lel", "pto", "hbu"})})
+    assert matches == {frozenset({"lel", "pto", "hbu"})}
 
 
 @patch("sys.stdin", NonCallableMock(read=Mock(return_value='{"cards": []}')))
@@ -123,4 +119,4 @@ def test_main(get_matches, transform_data):
         transform_data.assert_called_once_with({"cards": []})
         output = out.getvalue()
         match = set(json.loads(output))
-        case.assertSetEqual(match, {"hbu", "kca", "pto"})
+        assert match == {"hbu", "kca", "pto"}

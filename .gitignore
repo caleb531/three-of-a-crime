@@ -13,7 +13,7 @@ dist/
 # Unit test / coverage reports
 cover/
 htmlcov/
-.coverage
+.coverage*
 coverage.xml
 nosetests.xml
 
